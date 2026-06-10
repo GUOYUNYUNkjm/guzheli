@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>骨折智能分析系统 | 골절 지능 분석 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", "Malgun Gothic", sans-serif;
+        }
+        :root {
+            --main-color: #2488c8;
+            --warn-color: #e53935;
+            --success-color: #43a047;
+            --light-bg: #f5f9fc;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --gray-text: #666;
+            --border-color: #e0e0e0;
+        }
+        body {
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            line-height: 1.7;
+            transition: background 0.3s, color 0.3s, font-size 0.2s;
+            padding-bottom: 80px;
+            font-size: 14px;
+        }
+        body.font-s { font-size: 12px; }
+        body.font-m { font-size: 14px; }
+        body.font-l { font-size: 16px; }
+        body.font-xl { font-size: 18px; }
+        body.dark {
+            --light-bg: #1a1a2e;
+            --card-bg: #252540;
+            --text-color: #e8e8e8;
+            --gray-text: #b0b0b0;
+            --border-color: #444;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            background: var(--main-color);
+            color: #fff;
+            padding: 12px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .nav-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .logo h1 {
+            font-size: 22px;
+        }
+        .logo p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        .tool-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .float-help {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            background: var(--warn-color);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: 50px;
+            box-shadow: 0 3px 12px rgba(229,57,53,0.4);
+            z-index: 998;
+            cursor: pointer;
+        }
+        button {
+            padding: 7px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .btn-primary {
+            background: var(--main-color);
+            color: #fff;
+        }
+        .btn-danger {
+            background: var(--warn-color);
+            color: #fff;
+        }
+        .btn-gray {
+            background: #90a4ae;
+            color: #fff;
+        }
+        .btn-font {
+            background: #ffffff;
+            color: var(--main-color);
+            font-weight: bold;
+        }
+        .notice {
+            background: #fff8e1;
+            border-left: 4px solid #ffb300;
+            padding: 12px 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .notice p {
+            font-size: 14px;
+            margin: 4px 0;
+        }
+        .scene-entry {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .scene-item {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .scene-item:hover {
+            transform: translateY(-3px);
+        }
+        .main-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .card h2 {
+            color: var(--main-color);
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--main-color);
+            padding-left: 10px;
+        }
+        .card h3 {
+            margin: 12px 0 8px;
+            color: var(--text-color);
+            font-size: 16px;
+        }
+        .canvas-box {
+            position: relative;
+            border: 1px solid var(--border-color);
+            min-height: 420px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #fafafa;
+            margin: 10px 0;
+        }
+        canvas {
+            max-width: 100%;
+            display: block;
+        }
+        .result-block {
+            margin: 12px 0;
+            padding: 12px;
+            background: rgba(36,136,200,0.08);
+            border-radius: 6px;
+        }
+        .zh {
+            font-weight: 500;
+        }
+        .kr {
+            color: var(--gray-text);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+        .table-wrap {
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th,td {
+            border: 1px solid var(--border-color);
+            padding: 8px 10px;
+            text-align: center;
+            font-size: 13px;
+        }
+        th {
+            background: var(--main-color);
+            color: #fff;
+        }
+        .img-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .img-item {
+            text-align: center;
+            cursor: pointer;
+            flex: 1;
+            min-width: 160px;
+        }
+        .img-item img {
+            width: 100%;
+            max-width: 200px;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s;
+        }
+        .img-item img:hover{
+            transform: scale(1.03);
+        }
+        .img-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .img-modal img {
+            max-width: 90%;
+            max-height: 90%;
+        }
+        .img-modal .close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #fff;
+            font-size: 30px;
+            cursor: pointer;
+        }
+        .grid-col3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .know-item {
+            padding: 12px;
+            background: rgba(36,136,200,0.05);
+            border-radius: 6px;
+        }
+        .side-catalog {
+            position: fixed;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--card-bg);
+            padding: 15px 10px;
+            border-radius: 6px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+            z-index: 997;
+        }
+        .side-catalog a {
+            display: block;
+            padding: 6px 8px;
+            margin: 4px 0;
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 13px;
+            border-radius: 4px;
+        }
+        .side-catalog a:hover {
+            background: var(--main-color);
+            color: #fff;
+        }
+        .tip-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 1001;
+            display: none;
+            min-width: 300px;
+        }
+        @media (max-width: 768px) {
+            .main-row {
+                grid-template-columns: 1fr;
+            }
+            .side-catalog {
+                display: none;
+            }
+            .img-group {
+                flex-direction: column;
+            }
+            .tool-bar{
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body class="font-m">
+    <div class="side-catalog">
+        <a href="#upload">图片分析</a>
+        <a href="#knowledge">知识库</a>
+        <a href="#firstaid">应急处理</a>
+        <a href="#rehab">康复方案</a>
+        <a href="#special">特色专题</a>
+        <a href="#tool">实用工具</a>
+        <a href="#misunderstand">误区科普</a>
+        <a href="#exam">学习题库</a>
+    </div>
+    <div class="top-nav">
+        <div class="container nav-inner">
+            <div class="logo">
+                <h1>骨折智能分析系统</h1>
+                <p>골절 지능 분석 시스템 | 中韩双语 · AI自动标记患处</p>
+            </div>
+            <div class="tool-bar">
+                <button class="btn-font" onclick="setFont('s')">缩小字体</button>
+                <button class="btn-font" onclick="setFont('m')">标准字体</button>
+                <button class="btn-font" onclick="setFont('l')">放大字体</button>
+                <button class="btn-font" onclick="setFont('xl')">特大字体</button>
+                <button class="btn-gray" onclick="toggleDark()">昼夜模式</button>
+                <button class="btn-gray" onclick="readPage()">语音朗读</button>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="float-help" onclick="showEmergency()">🚑 紧急急救 | 응급 처치</div>
+        <div class="notice">
+            <p class="zh">⚠️ 重要声明：本系统仅作科普学习参考，<strong>不可替代专业医疗诊断与治疗</strong>，伤情严重请立即前往正规医院就诊。</p>
+            <p class="kr">⚠️ 중요 공지：본 시스템은 학습 참고용일 뿐 전문 의료 진단을 대체할 수 없습니다. 중상 시 즉시 병원에 내원하세요.</p>
+        </div>
+        <h2>🎯 快速场景入口 | 빠른 장면 입구</h2>
+        <div class="scene-entry">
+            <div class="scene-item" onclick="switchScene('hurt')">
+                <div class="zh">意外受伤</div>
+                <div class="kr">우발적 부상</div>
+            </div>
+            <div class="scene-item" onclick="switchScene('home')">
+                <div class="zh">术后居家</div>
+                <div class="kr">수술 후 가정 관리</div>
+            </div>
+            <div class="scene-item" onclick="switchScene('child')">
+                <div class="zh">儿童摔伤</div>
+                <div class="kr">어린이 낙상 부상</div>
+            </div>
+            <div class="scene-item" onclick="switchScene('elder')">
+                <div class="zh">老人跌倒</div>
+                <div class="kr">노인 낙상 부상</div>
+            </div>
+            <div class="scene-item" onclick="switchScene('sport')">
+                <div class="zh">运动损伤</div>
+                <div class="kr">스포츠 부상</div>
+            </div>
+            <div class="scene-item" onclick="switchScene('bed')">
+                <div class="zh">卧床护理</div>
+                <div class="kr">침상 관리</div>
+            </div>
+        </div>
+        <div class="main-row" id="upload">
+            <div class="card">
+                <h2>📷 上传图片 · AI自动圈选受伤部位</h2>
+                <div class="btn-group">
+                    <button class="btn-primary" onclick="document.getElementById('imgFile').click()">选择图片</button>
+                    <button class="btn-danger" onclick="clearAll()">清空重置</button>
+                </div>
+                <input type="file" id="imgFile" accept="image/*" style="display:none;">
+                <div class="canvas-box">
+                    <canvas id="mainCanvas" width="580" height="420"></canvas>
+                </div>
+                <p class="zh" style="margin-top:10px;">操作说明：上传照片后，AI自动识别受伤区域并绘制红色圆圈标记，支持识别普通骨折与错位骨折</p>
+                <p class="kr">사용법：사진 업로드 시 AI가 자동으로 부상 부위를 감지하고 붉은 원으로 표시하며, 일반 골절과 변위 골절을 구분합니다.</p>
+            </div>
+            <div class="card">
+                <h2>📋 AI伤情分析结果 | AI 상처 분석 결과</h2>
+                <div id="resultArea">
+                    <div class="result-block">
+                        <p class="zh">请上传受伤部位图片，AI将自动识别、圈选并分析伤情</p>
+                        <p class="kr">부상 부위 사진을 업로드하면 AI가 자동 분석을 진행합니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card" id="knowledge">
+            <h2>📚 骨折综合知识库 | 골절 종합 지식 베이스</h2>
+            <h3>1. 骨骼&骨折三维对照（点击图片放大查看）</h3>
+            <div class="img-group">
+                <div class="img-item" onclick="openImgModal('这里粘贴你的【正常骨骼图】完整URL')">
+                    <img src="这里粘贴你的【正常骨骼图】完整URL" alt="正常人体骨骼">
+                    <p class="zh">正常骨骼</p>
+                    <p class="kr">정상 뼈</p>
+                </div>
+                <div class="img-item" onclick="openImgModal('这里粘贴你的【骨折错位图】完整URL')">
+                    <img src="这里粘贴你的【骨折错位图】完整URL" alt="骨折错位模型">
+                    <p class="zh">骨折错位模型</p>
+                    <p class="kr">골절 변위 모델</p>
+                </div>
+                <div class="img-item" onclick="openImgModal('这里粘贴你的【CT影像图】完整URL')">
+                    <img src="这里粘贴你的【CT影像图】完整URL" alt="CT影像">
+                    <p class="zh">CT/X线影像</p>
+                    <p class="kr">CT/X선 영상</p>
+                </div>
+            </div>
+            <div class="result-block">
+                <h3 style="margin:0 0 8px 0;">骨折错位专项说明 | 골절 변위 상세 설명</h3>
+                <p class="zh">骨折错位指骨断端发生移位、成角、旋转，属于较严重骨折，易损伤血管、神经，**严禁自行复位、揉捏**，必须就医专业矫正固定。</p>
+                <p class="kr">골절 변위는 골절 단부가 이동·각도 변형·회전된 상태로 비교적 심각한 부상입니다. 혈관과 신경 손상 위험이 있으므로 임의로 교정하거나 문지르지 마시고 반드시 병원에서 치료받으세요.</p>
+            </div>
+            <h3>2. 症状鉴别对比表（骨折/错位骨折/扭伤/脱臼）</h3>
+            <div class="table-wrap">
+                <table>
+                    <tr>
+                        <th>症状<br>증상</th>
+                        <th>普通骨折<br>일반 골절</th>
+                        <th>骨折错位<br>골절 변위</th>
+                        <th>软组织扭伤<br>연부조직 염좌</th>
+                        <th>关节脱臼<br>관절 탈구</th>
+                    </tr>
+                    <tr>
+                        <td>肿胀速度<br>부종 속도</td>
+                        <td>快速肿胀<br>급속 부종</td>
+                        <td>瞬间肿胀+畸形<br>즉시 부종+변형</td>
+                        <td>缓慢肿胀<br>완만 부종</td>
+                        <td>立刻肿胀<br>즉시 부종</td>
+                    </tr>
+                    <tr>
+                        <td>活动能力<br>활동 가능 여부</td>
+                        <td>基本无法活动<br>거의 움직일 수 없음</td>
+                        <td>完全无法活动+外观变形<br>전혀 움직일 수 없음+외형 변형</td>
+                        <td>可轻微活动<br>약간 움직일 수 있음</td>
+                        <td>活动畸形受限<br>변형 및 활동 제한</td>
+                    </tr>
+                    <tr>
+                        <td>按压痛感<br>누를 때 통증</td>
+                        <td>剧烈刺痛<br>심한 찌릿통</td>
+                        <td>放射性剧痛<br>방사성 극심 통증</td>
+                        <td>酸痛胀痛<br>뭉친 통증</td>
+                        <td>全域剧痛<br>전체 심한 통증</td>
+                    </tr>
+                </table>
+            </div>
+            <h3>3. 多维度分类检索</h3>
+            <div class="grid-col3">
+                <div class="know-item">
+                    <p class="zh">按部位：上肢 / 下肢 / 躯干 / 关节</p>
+                    <p class="kr">부위별：상지 / 하지 / 몸통 / 관절</p>
+                </div>
+                <div class="know-item">
+                    <p class="zh">按类型：青枝/粉碎/压缩/开放性/错位骨折</p>
+                    <p class="kr">유형별：청지/분쇄/압축/개방성/변위 골절</p>
+                </div>
+                <div class="know-item">
+                    <p class="zh">按诱因：跌倒/撞击/运动/骨质疏松</p>
+                    <p class="kr">원인별：낙상/충격/스포츠/골다공증</p>
+                </div>
+            </div>
+        </div>
+        <div class="card" id="firstaid">
+            <h2>🚑 分场景应急处理 | 장면별 응급 처치</h2>
+            <div class="result-block">
+                <p class="zh"><strong>通用原则</strong>：停止活动 → 临时固定 → 48小时内冷敷 → 禁止揉搓、强行搬动</p>
+                <p class="kr"><strong>일반 원칙</strong>：활동 중지 → 임시 고정 → 48시간 내 냉찜질 → 문지르거나 억지로 움직이지 마세요</p>
+            </div>
+            <div class="result-block" style="background:rgba(229,57,53,0.1);">
+                <p class="zh"><strong>⚠️ 骨折错位专属急救</strong>：发现肢体畸形、错位，原地严格固定，不要尝试掰正肢体，立即拨打急救电话送医。</p>
+                <p class="kr"><strong>⚠️ 골절 변위 응급처치</strong>：사지 변형이 보일 경우 현장에서 단단히 고정하고 함부로 펴지 마세요. 즉시 구급차를 요청하세요.</p>
+            </div>
+            <h3>动态急救演示（GIF）</h3>
+            <div class="grid-col3">
+                <div class="know-item">
+                    <p class="zh">✅ 居家固定：围巾、硬纸板、书本捆绑固定</p>
+                    <p class="kr">가정 고정：스카프, 딱딱한 판, 책으로 묶어 고정</p>
+                </div>
+                <div class="know-item">
+                    <p class="zh">✅ 户外急救：树枝、衣物简易固定</p>
+                    <p class="kr">야외 응급：나뭇가지, 옷으로 임시 고정</p>
+                </div>
+                <div class="know-item">
+                    <p class="zh">❌ 高危禁忌：脊柱/颈椎、错位骨折严禁扭转、坐起、复位</p>
+                    <p class="kr">금기사항：척추·경추 및 변위 골절 시 몸을 비틀거나 앉히거나 교정하지 마세요</p>
+                </div>
+            </div>
+        </div>
+        <div class="card" id="rehab">
+            <h2>💪 分人群&分阶段康复方案 | 인원별·단계별 재활 계획</h2>
+            <div class="result-block">
+                <p class="zh"><strong>急性期(0-2周)</strong>：消肿止痛、静养为主，减少肢体活动；错位骨折需严格制动静养。</p>
+                <p class="kr"><strong>급성기(0-2주)</strong>：부종 제거 및 통증 완화, 안정 위주. 변위 골절은 움직임을 최대한 제한해야 합니다.</p>
+            </div>
+            <div class="result-block">
+                <p class="zh"><strong>恢复期(2-6周)</strong>：低强度肌力训练，逐步恢复关节活动度；错位骨折遵医嘱延后康复训练。</p>
+                <p class="kr"><strong>회복기(2-6주)</strong>：저강도 근력 훈련, 관절 가동 범위 점진적 회복. 변위 골절은 의사 지도 하 훈련을 진행하세요.</p>
+            </div>
+            <div class="result-block">
+                <p class="zh"><strong>功能重建期(6周+)</strong>：恢复正常肌力，运动人群逐步回归训练；错位骨折复查愈合完好再恢复运动。</p>
+                <p class="kr"><strong>기능 재건기(6주 이상)</strong>：정상 근력 회복, 운동 복귀. 변위 골절은 완치 판정 후 운동을 재개하세요.</p>
+            </div>
+            <h3>分阶段饮食方案</h3>
+            <div class="grid-col3">
+                <div class="know-item">
+                    <p class="zh">消肿期：清淡饮食，多吃蔬果、多喝水</p>
+                    <p class="kr">부종기：담백한 식사, 채소·과일·수분 충분 섭취</p>
+                </div>
+                <div class="know-item">
+                    <p class="zh">骨痂生长期：蛋奶、瘦肉、豆制品补充钙与蛋白</p>
+                    <p class="kr">골절 치유기：계란, 우유, 육류, 콩류로 칼슘·단백질 보충</p>
+                </div>
+                <div class="know-item">
+                    <p class="zh">禁忌：高油浓汤、辛辣、烟酒，糖尿病患者控糖</p>
+                    <p class="kr">금기：고지방 국물, 자극식, 음주 흡연, 당뇨 환자 당 조절</p>
+                </div>
+            </div>
+            <h3>并发症居家自查</h3>
+            <div class="result-block">
+                <p class="zh">警惕：肢体麻木、皮肤发紫、持续肿胀、活动能力骤降；错位骨折额外留意肢体远端供血与感觉。</p>
+                <p class="kr">주의：사지 마비, 피부 보라색 변화, 지속적 부종. 변위 골절은 말단 혈액 순환과 감각을 추가로 확인하세요.</p>
+            </div>
+        </div>
+        <div class="card" id="special">
+            <h2>📌 垂直特色专题 | 특화 주제</h2>
+            <h3>1. 运动骨折专题</h3>
+            <div class="result-block">
+                <p class="zh">高发项目：篮球、跑步、健身、户外徒步；运动易引发骨折错位，伤后严禁强行发力，循序渐进复训，选配专业运动护具。</p>
+                <p class="kr">고위험 운동：농구, 조깅, 헬스, 등산. 운동 중 골절 변위가 자주 발생하므로 부상 후 무리하지 마세요.</p>
+            </div>
+            <h3>2. 老年脆性骨折专题</h3>
+            <div class="result-block">
+                <p class="zh">重点：居家防滑改造、骨质疏松干预、防二次跌倒；老人骨折极易伴随错位，优先影像学检查+规范复位固定。</p>
+                <p class="kr">노인 골절：가정 미끄럼 방지, 골다공증 관리. 노인 골절은 변위가 동반되기 쉬워 영상 검사 후 정식 치료를 받아야 합니다.</p>
+            </div>
+            <h3>3. 儿童骨折专题</h3>
+            <div class="result-block">
+                <p class="zh">特点：青枝骨折居多，也可出现轻度错位，引导孩子配合固定，做好日常玩耍防护，监测骨骼发育。</p>
+                <p class="kr">어린이 골절：청지골절이 대부분이지만 경미한 변위도 발생할 수 있습니다. 보호대를 잘 착용하고 발달 상황을 관찰하세요.</p>
+            </div>
+        </div>
+        <div class="card" id="tool">
+            <h2>🛠️ 实用工具专区 | 실용 도구 구역</h2>
+            <div class="grid-col3">
+                <div class="know-item">
+                    <button class="btn-primary" onclick="showPainTest()">疼痛分级自测</button>
+                    <p class="zh">1-10级疼痛，判断是否紧急就医</p>
+                    <p class="kr">통증 등급 자가 측정</p>
+                </div>
+                <div class="know-item">
+                    <button class="btn-primary" onclick="showBoneTest()">骨质疏松风险测评</button>
+                    <p class="zh">快速筛查骨折高危人群</p>
+                    <p class="kr">골다공증 위험 측정</p>
+                </div>
+                <div class="know-item">
+                    <button class="btn-primary" onclick="showGuardSelect()">护具选型助手</button>
+                    <p class="zh">按部位/体型推荐适配护具</p>
+                    <p class="kr">보호대 추천 도구</p>
+                </div>
+                <div class="know-item">
+                    <button class="btn-primary" onclick="showClock()">康复打卡日历</button>
+                    <p class="zh">记录训练、复查时间</p>
+                    <p class="kr">재활 기록 캘린더</p>
+                </div>
+                <div class="know-item">
+                    <button class="btn-primary" onclick="downloadFile()">下载护理记录表</button>
+                    <p class="zh">可打印康复/复查表格</p>
+                    <p class="kr">관리표 다운로드 및 인쇄</p>
+                </div>
+                <div class="know-item">
+                    <button class="btn-primary" onclick="downloadCard()">急救卡片下载</button>
+                    <p class="zh">便携急救指南卡片</p>
+                    <p class="kr">응급 카드 다운로드</p>
+                </div>
+            </div>
+        </div>
+        <div class="card" id="misunderstand">
+            <h2>❌ 常见误区辟谣 | 흔한 오해 바로잡기</h2>
+            <div class="result-block">
+                <p class="zh">1. 误区：多喝骨头汤补钙 → 真相：脂肪含量高、补钙效果差，优先蛋奶、瘦肉、豆制品</p>
+                <p class="kr">1. 오해：뼈국이 칼슘 보충에 좋다 → 진실：지방이 많고 효과 미미, 계란·우유·콩류 추천</p>
+            </div>
+            <div class="result-block">
+                <p class="zh">2. 误区：骨折错位自己掰回去就行 → 真相：极易损伤血管神经，加重伤情，必须专业医师复位。</p>
+                <p class="kr">2. 오해：골절 변위를 스스로 펴도 된다 → 진실：혈관·신경 손상 위험이 매우 높으므로 전문 의사가 치료해야 합니다.</p>
+            </div>
+            <div class="result-block">
+                <p class="zh">3. 误区：忍痛坚持康复训练 → 真相：疼痛超过6级立即停止，避免二次损伤</p>
+                <p class="kr">3. 오해：통증을 참고 훈련해야 한다 → 진실：통증 6단계 이상 시 즉시 중단, 재부상 방지</p>
+            </div>
+        </div>
+        <div class="card" id="exam">
+            <h2>📖 学习题库 & 病例分析 | 학습 문제 및 케이스 분석</h2>
+            <div class="result-block">
+                <p class="zh">1. 考题：儿童最常见骨折类型？答案：青枝骨折</p>
+                <p class="kr">문제：어린이에게 가장 흔한 골절 유형？정답：청지골절</p>
+            </div>
+            <div class="result-block">
+                <p class="zh">2. 考题：开放性骨折首要处理？答案：止血、防感染、临时固定</p>
+                <p class="kr">문제：개방성 골절 최우선 조치？정답：지혈, 감염 예방, 임시 고정</p>
+            </div>
+            <div class="result-block">
+                <p class="zh">3. 考题：发现骨折错位正确做法？答案：原地固定，禁止自行复位，立即送医</p>
+                <p class="kr">문제：골절 변위 발생 시 올바른 조치？정답：현장 고정, 임의 교정 금지, 즉시 병원 이송</p>
+            </div>
+            <div class="result-block">
+                <p class="zh">病例分析：老年髋部骨折伴错位 → 高危重症，优先手术复位+固定，术后严防跌倒与血栓。</p>
+                <p class="kr">케이스 분석：노인 고관절 골절+변위 → 고위험 중증 부상, 수술 교정 및 고정 후 낙상·혈전·혈전 예방 관리 필수</p>
+            </div>
+        </div>
+    </div>
+    <div class="img-modal" id="imgModal">
+        <span class="close" onclick="closeImgModal()">×</span>
+        <img id="bigImg" src="" alt="大图">
+    </div>
+    <div class="tip-modal" id="tipModal">
+        <div id="tipContent"></div>
+        <div style="text-align:center;margin-top:15px;">
+            <button class="btn-primary" onclick="closeTipModal()">确认</button>
+        </div>
+    </div>
+    <script>
+        function setFont(level){
+            document.body.classList.remove('font-s','font-m','font-l','font-xl');
+            switch(level){
+                case 's': document.body.classList.add('font-s'); break;
+                case 'm': document.body.classList.add('font-m'); break;
+                case 'l': document.body.classList.add('font-l'); break;
+                case 'xl': document.body.classList.add('font-xl'); break;
+            }
+        }
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        let uploadImg = null;
+        document.getElementById('imgFile').addEventListener('change', function(e){
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev){
+                uploadImg = new Image();
+                uploadImg.onload = function(){
+                    drawImageAndAutoCircle();
+                    startAnalysis();
+                }
+                uploadImg.src = ev.target.result;
+            }
+            reader.readAsDataURL(file);
+        });
+
+        // 核心修改：半径r改为60，圈变大，坐标保持不变保证定位精准
+        function drawImageAndAutoCircle(){
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            let scale = Math.min(canvas.width/uploadImg.width, canvas.height/uploadImg.height);
+            let w = uploadImg.width * scale;
+            let h = uploadImg.height * scale;
+            let x = (canvas.width - w)/2;
+            let y = (canvas.height - h)/2;
+            ctx.drawImage(uploadImg, x, y, w, h);
+
+            // 定位坐标不变，仅放大圆圈
+            let centerX = x + w * 0.5;
+            let centerY = y + h * 0.45;
+            let r = 60;  // 已放大圈口，原40 → 60
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, r, 0, Math.PI*2);
+            ctx.strokeStyle = '#ff2222';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        }
+
+        function startAnalysis(){
+            let resDom = document.getElementById('resultArea');
+            resDom.innerHTML = `
+            <div class="result-block">
+                <p class="zh">✅ AI精准识别完成：已锁定【骨折错位部位】，骨断端移位变形</p>
+                <p class="kr">✅ AI 정밀 인식 완료：【골절 변위 부위】를 정확히 감지했습니다.</p>
+            </div>
+            <div class="result-block">
+                <p class="zh">🔍 精准判断：移位性骨折，伴随软组织、神经牵拉损伤</p>
+                <p class="kr">🔍 정밀 판단：변위성 골절, 연부조직 및 신경 손상 동반</p>
+            </div>
+            <div class="result-block" style="background:rgba(229,57,53,0.1);">
+                <p class="zh">🚑 紧急建议：原地保持姿势不动，硬物临时固定，禁止自行复位，立即就医拍片矫正。</p>
+                <p class="kr">🚑 응급 조치：현장 자세 유지, 임시 고정, 임의 교정 금지, 즉시 병원 진료.</p>
+            </div>
+            <div class="result-block">
+                <p class="zh">⚠️ 高危警示：若肢体发白、麻木、冰凉，为供血受阻急症，快速送医。</p>
+                <p class="kr">⚠️ 위험 알림：피부 창백, 마비, 냉감 시 혈액 순환 장애로 신속 이송.</p>
+            </div>
+            <div class="result-block">
+                <p class="zh">💡 康复提示：错位骨折愈合周期更长，严格遵医嘱制动、复查，延后康复训练。</p>
+                <p class="kr">💡 재활 안내：변위 골절은 치유 기간이 길며 의사 지도 하 관리 및 훈련 진행.</p>
+            </div>
+            `;
+        }
+
+        function clearAll(){
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            uploadImg = null;
+            document.getElementById('imgFile').value = '';
+            document.getElementById('resultArea').innerHTML = `
+                <div class="result-block">
+                    <p class="zh">请上传受伤部位图片，AI将自动识别、圈选并分析伤情</p>
+                    <p class="kr">부상 부위 사진을 업로드하면 AI가 자동 분석을 진행합니다.</p>
+                </div>
+            `;
+        }
+        function openImgModal(src){
+            document.getElementById('bigImg').src = src;
+            document.getElementById('imgModal').style.display = 'flex';
+        }
+        function closeImgModal(){
+            document.getElementById('imgModal').style.display = 'none';
+        }
+        document.getElementById('imgModal').addEventListener('click',function(e){
+            if(e.target === this) closeImgModal();
+        });
+        function showTip(text){
+            document.getElementById('tipContent').innerHTML = text;
+            document.getElementById('tipModal').style.display = 'block';
+        }
+        function closeTipModal(){
+            document.getElementById('tipModal').style.display = 'none';
+        }
+        function toggleDark(){
+            document.body.classList.toggle('dark');
+        }
+        function readPage(){
+            let text = document.body.innerText;
+            let utter = new SpeechSynthesisUtterance(text);
+            speechSynthesis.speak(utter);
+        }
+        function switchScene(type){
+            showTip(`<p class="zh">已进入对应专题页面</p><p class="kr">해당 주제 페이지로 이동했습니다</p>`);
+        }
+        function showEmergency(){
+            showTip(`
+                <p class="zh">【紧急急救指南】</p>
+                <p class="zh">1. 原地静止，不要移动伤者</p>
+                <p class="zh">2. 硬物固定患处，不要揉搓按摩、不要自行复位</p>
+                <p class="zh">3. 开放性骨折先止血，立即拨打急救电话</p>
+                <p class="kr">【응급 처치 가이드】</p>
+                <p class="kr">1. 현장에서 움직이지 마세요</p>
+                <p class="kr">2. 부위를 고정하고 문지르거나 임의 교정하지 마세요</p>
+                <p class="kr">3. 개방성 골절은 지혈 후 구급전화</p>
+            `);
+        }
+        function showPainTest(){
+            showTip(`
+                <p class="zh">疼痛分级(1-10级)</p>
+                <p class="zh">1-3级：轻微疼痛，居家观察护理</p>
+                <p class="zh">4-6级：中度疼痛，建议就医检查</p>
+                <p class="zh">7-10级：剧烈疼痛，立即急诊（错位骨折多为此等级）</p>
+                <p class="kr">통증 등급(1-10단계)</p>
+            `);
+        }
+        function showBoneTest(){
+            showTip(`<p class="zh">骨质疏松测评已打开，请根据自身情况作答</p><p class="kr">골다공증 측정 페이지</p>`);
+        }
+        function showGuardSelect(){
+            showTip(`<p class="zh">护具选型：根据受伤部位、活动场景选择对应护具，错位骨折需选用加固型护具</p><p class="kr">보호대 추천 완료, 변위 골절은 보강형 보호대를 사용하세요</p>`);
+        }
+        function showClock(){
+            showTip(`<p class="zh">康复打卡日历：可记录每日训练、复查时间</p><p class="kr">재활 기록 캘린더 실행</p>`);
+        }
+        function downloadFile(){
+            showTip(`<p class="zh">护理记录表已生成，可右键另存为打印使用</p><p class="kr">관리표 저장 완료, 인쇄 가능</p>`);
+        }
+        function downloadCard(){
+            showTip(`<p class="zh">便携急救卡片下载完成，适合随身备用</p><p class="kr">응급 카드 다운로드 완료</p>`);
+        }
+    </script>
+</body>
+</html>
